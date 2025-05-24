@@ -1,14 +1,18 @@
 name: Update Changelog and Bump Version
 description: |
-  This workflow updates the CHANGELOG.md with the contents of changelog-entry.txt,
-  bumps the patch version in package.json, and commits the changes back to the main branch.
+  This workflow runs only when a PR is merged into main.
+  It updates the CHANGELOG.md with changelog-entry.txt,
+  bumps the patch version, and amends the merge commit.
+
 on:
-  push:
+  pull_request:
+    types: [closed]
     branches:
       - main
 
 jobs:
   changelog:
+    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
 
     steps:
@@ -16,6 +20,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0  # Required for amend
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -37,19 +42,16 @@ jobs:
       - name: Bump patch version
         run: npm version patch --no-git-tag-version
 
-      - name: Commit and push changes
+      - name: Commit and push (amend merge commit)
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
-          
+
           if [ -f changelog-entry.txt ]; then
-              git rm -f changelog-entry.txt
+            git rm -f changelog-entry.txt
           fi
 
           git add CHANGELOG.md package.json package-lock.json || true
           VERSION=$(node -p "require('./package.json').version")
-          git commit -m "🔖 Bump version to v$VERSION" || echo "Nothing to commit"
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:main
-          
-      - name: Delete changelog-entry.txt
-        run: rm -f changelog-entry.txt || true
+          git commit --amend -m "🔖 Merge PR & bump version to v$VERSION"
+          git push --force https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:main
