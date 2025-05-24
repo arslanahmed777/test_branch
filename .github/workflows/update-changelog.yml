@@ -41,8 +41,14 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
+          
+          if [ -f changelog-entry.txt ]; then
+              git rm -f changelog-entry.txt
+          fi
+
           git add CHANGELOG.md package.json package-lock.json || true
-          git commit -m "🔖 chore: update changelog and bump version" || echo "Nothing to commit"
+          VERSION=$(node -p "require('./package.json').version")
+          git commit -m "🔖 Bump version to v$VERSION" || echo "Nothing to commit"
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:main
           
       - name: Delete changelog-entry.txt
