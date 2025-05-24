@@ -1,15 +1,9 @@
 name: Update Changelog and Bump Version
-description: |
-  This workflow updates the CHANGELOG.md file with the contents of changelog-entry.txt,
-  bumps the patch version in package.json, and commits the changes back to the main branch.
-  It runs on every push to the main branch.
+
 on:
   push:
     branches:
       - main
-
-permissions:
-  contents: write
 
 jobs:
   changelog:
@@ -43,12 +37,8 @@ jobs:
 
       - name: Commit and push changes
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add CHANGELOG.md package.json package-lock.json
-          git commit -m "🔖 chore: update changelog and bump version"
-          git push
-
-      - name: Delete changelog-entry.txt
-        run: rm -f changelog-entry.txt
-        
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git add CHANGELOG.md package.json package-lock.json || true
+          git commit -m "🔖 chore: update changelog and bump version" || echo "Nothing to commit"
+          git push https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }} HEAD:master
