@@ -1,12 +1,16 @@
 name: Update Changelog and Bump Version
-
+description: |
+  This workflow updates the CHANGELOG.md file with the contents of changelog-entry.txt,
+  bumps the patch version in package.json, and commits the changes back to the main branch.
+  It runs on every push to the main branch.
 on:
   push:
     branches:
       - main
+
 permissions:
   contents: write
-  
+
 jobs:
   changelog:
     runs-on: ubuntu-latest
