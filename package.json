@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/arslanahmed777/test_branch/issues"
   },
-  "homepage": "https://github.com/arslanahmed777/test_branch#readme"
+  "homepage": "https://github.com/arslanahmed777/test_branch#readme",
+  "dependencies": {
+    "loadash": "^1.0.0"
+  }
 }
