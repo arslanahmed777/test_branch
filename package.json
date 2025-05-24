@@ -1,0 +1,20 @@
+{
+  "name": "test_branch",
+  "version": "1.0.0",
+  "description": "",
+  "main": "test.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/arslanahmed777/test_branch.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/arslanahmed777/test_branch/issues"
+  },
+  "homepage": "https://github.com/arslanahmed777/test_branch#readme"
+}

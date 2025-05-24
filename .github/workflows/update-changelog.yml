@@ -1,0 +1,47 @@
+name: Update Changelog and Bump Version
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Append changelog-entry.txt to CHANGELOG.md
+        run: |
+          if [ -f changelog-entry.txt ]; then
+            echo -e "\n## v$(node -p "require('./package.json').version") - $(date +'%Y-%m-%d')" >> CHANGELOG.md
+            cat changelog-entry.txt >> CHANGELOG.md
+          else
+            echo "No changelog-entry.txt found. Skipping."
+          fi
+
+      - name: Bump patch version
+        run: npm version patch --no-git-tag-version
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md package.json package-lock.json
+          git commit -m "🔖 chore: update changelog and bump version"
+          git push
+          - name: Delete changelog-entry.txt
+          run: rm -f changelog-entry.txt
+        
