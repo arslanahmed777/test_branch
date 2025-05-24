@@ -42,6 +42,7 @@ jobs:
           git add CHANGELOG.md package.json package-lock.json
           git commit -m "🔖 chore: update changelog and bump version"
           git push
-          - name: Delete changelog-entry.txt
-          run: rm -f changelog-entry.txt
+
+      - name: Delete changelog-entry.txt
+        run: rm -f changelog-entry.txt
         
