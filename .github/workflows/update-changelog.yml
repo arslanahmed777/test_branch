@@ -1,9 +1,8 @@
 name: Update Changelog and Bump Version
 description: |
   This workflow runs when a PR is merged into main.
-  It prepends changelog-entry.txt to CHANGELOG.md,
-  bumps the patch version, clears changelog-entry.txt,
-  and amends the merge commit.
+  It bumps the version, prepends changelog-entry.txt to CHANGELOG.md,
+  clears changelog-entry.txt, and amends the merge commit.
 
 on:
   pull_request:
@@ -31,9 +30,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Bump patch version and capture it
+        id: bump
+        run: |
+          npm version patch --no-git-tag-version
+          echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
+
       - name: Prepend changelog-entry.txt to CHANGELOG.md
         run: |
-          VERSION=$(node -p "require('./package.json').version")
+          VERSION=${{ steps.bump.outputs.version }}
           DATE=$(date +'%Y-%m-%d')
 
           if [ -f changelog-entry.txt ]; then
@@ -41,9 +46,6 @@ jobs:
           else
             echo "No changelog-entry.txt found. Skipping."
           fi
-
-      - name: Bump patch version
-        run: npm version patch --no-git-tag-version
 
       - name: Commit and push (amend merge commit)
         run: |
@@ -54,6 +56,6 @@ jobs:
           : > changelog-entry.txt
 
           git add CHANGELOG.md changelog-entry.txt package.json package-lock.json || true
-          VERSION=$(node -p "require('./package.json').version")
+          VERSION=${{ steps.bump.outputs.version }}
           git commit --amend -m "🔖 Merge PR & bump version to v$VERSION"
           git push --force https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:main
