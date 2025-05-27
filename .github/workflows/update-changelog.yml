@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           # Use a PAT with admin permissions to bypass branch protection
-          token: ${{ secrets.ADMIN_TOKEN || secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
       - name: Setup Node.js
