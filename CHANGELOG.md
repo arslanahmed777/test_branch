@@ -1,3 +1,17 @@
+## v1.0.12 - May 27, 2025 at 10:26 PM
+### Developer: Arslan Ahmed
+
+### ✨ Added
+- **Integrated `eslint-plugin-sonarjs` for Code Quality**  
+  Integrated `eslint-plugin-sonarjs` into the project configuration to detect code smells and enhance overall code quality.
+
+- **Configured `eslint-plugin-simple-import-sort`**  
+  Added the plugin to `eslint.config.js` for consistent and automatic import sorting.
+
+### 🔄 Changed
+- **Sorted All Imports with Simple Import Sort**  
+  Refactored import statements throughout the codebase to follow the rules defined by `eslint-plugin-simple-import-sort` for better maintainability.
+
 ## v1.0.11 - 2025-05-27
 test30
 
