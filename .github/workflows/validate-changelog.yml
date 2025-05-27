@@ -1,0 +1,88 @@
+name: Validate Changelog Entry
+description: |
+  This workflow checks if `changelog-entry.txt` exists and has content.
+  It runs on pull requests targeting the main branch.
+  If the file is missing or empty, it comments on the PR and fails the check.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+
+jobs:
+  check-changelog:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Fetch the full history to compare with base branch
+          fetch-depth: 0
+      
+      - name: Check if changelog-entry.txt exists and has content
+        id: changelog-check
+        run: |
+          # Check if changelog-entry.txt exists
+          if [ ! -f "changelog-entry.txt" ]; then
+            echo "❌ changelog-entry.txt file not found!"
+            echo "Please create a changelog-entry.txt file with your changelog entry."
+            echo "has_content=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          # Check if file has content (excluding empty lines and whitespace)
+          if [ ! -s "changelog-entry.txt" ] || [ -z "$(grep -v '^[[:space:]]*$' changelog-entry.txt)" ]; then
+            echo "❌ changelog-entry.txt is empty!"
+            echo "Please add your changelog entry to changelog-entry.txt before merging."
+            echo "has_content=false" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "✅ changelog-entry.txt has content!"
+            echo "Changelog entry found:"
+            echo "---"
+            cat changelog-entry.txt
+            echo "---"
+            echo "has_content=true" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Comment on PR if changelog is missing
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## ❌ Changelog Entry Required
+              
+              This pull request cannot be merged because \`changelog-entry.txt\` is empty or missing.
+              
+              **Please add your changelog entry to \`changelog-entry.txt\` before merging.**
+              
+              The changelog should describe:
+              - What changes were made
+              - Any breaking changes
+              - New features or bug fixes
+              
+              Once you add the changelog entry, this check will pass automatically.`
+            })
+      
+      - name: Set PR status
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const hasContent = '${{ steps.changelog-check.outputs.has_content }}' === 'true';
+            
+            github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.payload.pull_request.head.sha,
+              state: hasContent ? 'success' : 'failure',
+              target_url: `${context.payload.repository.html_url}/actions/runs/${context.runId}`,
+              description: hasContent ? 'Changelog entry found' : 'Changelog entry required',
+              context: 'changelog/validation'
+            })
