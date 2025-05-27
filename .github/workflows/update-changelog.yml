@@ -100,14 +100,23 @@ jobs:
           script: |
             const version = '${{ steps.bump.outputs.version }}';
             const tagName = `v${version}`;
+            const changelogContent = `${{ steps.changelog.outputs.changelog_content }}`;
+            const hasChangelog = '${{ steps.changelog.outputs.has_changelog }}' === 'true';
             
+            // Prepare release body
+            let releaseBody;
+            if (hasChangelog && changelogContent && changelogContent !== 'Version bump - no specific changes documented') {
+              releaseBody = changelogContent;
+            } else {
+              releaseBody = `Version ${version} - Auto-generated release\n\nNo specific changes documented.`;
+            }
             try {
               await github.rest.repos.createRelease({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 tag_name: tagName,
                 name: `Release ${tagName}`,
-                body: `Version ${version} - Auto-generated release`,
+                 body: releaseBody,
                 draft: false,
                 prerelease: false
               });
