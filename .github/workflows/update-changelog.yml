@@ -19,8 +19,8 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          # Use a PAT with admin permissions to bypass branch protection
-          token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
+          # Use PAT with admin permissions to bypass branch protection
+          token: ${{ secrets.PAT_TOKEN }}
           fetch-depth: 0
 
       - name: Setup Node.js
@@ -65,5 +65,40 @@ jobs:
           git add CHANGELOG.md changelog-entry.txt package.json package-lock.json
 
           VERSION=${{ steps.bump.outputs.version }}
-          git commit --amend -m "🔖 Merge PR & bump version to v$VERSION"
-          git push  https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:main
+          
+          # Amend the merge commit
+          git commit --amend --no-edit -m "🔖 Merge PR & bump version to v$VERSION"
+          
+          # Force push with admin token to bypass branch protection
+          git push --force-with-lease
+
+      - name: Create Git Tag
+        run: |
+          VERSION=${{ steps.bump.outputs.version }}
+          git tag "v$VERSION"
+          git push origin "v$VERSION"
+        continue-on-error: true
+
+      - name: Create GitHub Release
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
+          script: |
+            const version = '${{ steps.bump.outputs.version }}';
+            const tagName = `v${version}`;
+            
+            try {
+              await github.rest.repos.createRelease({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                tag_name: tagName,
+                name: `Release ${tagName}`,
+                body: `Version ${version} - Auto-generated release`,
+                draft: false,
+                prerelease: false
+              });
+              console.log(`✅ Created release ${tagName}`);
+            } catch (error) {
+              console.log(`⚠️  Could not create release: ${error.message}`);
+            }
+        continue-on-error: true
