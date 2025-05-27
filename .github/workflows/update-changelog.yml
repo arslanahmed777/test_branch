@@ -42,11 +42,12 @@ jobs:
           VERSION=${{ steps.bump.outputs.version }} 
           
           # Detect timezone using IP
-          TIMEZONE=$(curl -s https://ipinfo.io/timezone || echo "UTC")
-          echo "🕒 Detected Timezone: $TIMEZONE"
+          # TIMEZONE=$(curl -s https://ipinfo.io/timezone || echo "UTC")
+          # echo "🕒 Detected Timezone: $TIMEZONE"
 
           # Get formatted date and time
-          DATE=$(TZ=$TIMEZONE date +"%B %e, %Y at %-l:%M %p")
+          # DATE=$(TZ=$TIMEZONE date +"%B %e, %Y at %-l:%M %p")
+          DATE=$(TZ=Asia/Karachi date +"%B %e, %Y at %-l:%M %p")
           if [ -f changelog-entry.txt ] && [ -s changelog-entry.txt ]; then
             # Save multiline-safe changelog content
             {
