@@ -39,9 +39,14 @@ jobs:
       - name: Prepend changelog-entry.txt to CHANGELOG.md and capture content
         id: changelog
         run: |
-          VERSION=${{ steps.bump.outputs.version }}
-          DATE=$(TZ=Asia/Karachi date +"%B %e, %Y at %-l:%M %p")
+          VERSION=${{ steps.bump.outputs.version }} 
+          
+          # Detect timezone using IP
+          TIMEZONE=$(curl -s https://ipinfo.io/timezone || echo "UTC")
+          echo "🕒 Detected Timezone: $TIMEZONE"
 
+          # Get formatted date and time
+          DATE=$(TZ=$TIMEZONE date +"%B %e, %Y at %-l:%M %p")
           if [ -f changelog-entry.txt ] && [ -s changelog-entry.txt ]; then
             # Save multiline-safe changelog content
             {
