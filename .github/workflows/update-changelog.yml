@@ -37,17 +37,28 @@ jobs:
           npm version patch --no-git-tag-version
           echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
 
-      - name: Prepend changelog-entry.txt to CHANGELOG.md
+      - name: Prepend changelog-entry.txt to CHANGELOG.md and capture content
+        id: changelog
         run: |
           VERSION=${{ steps.bump.outputs.version }}
           DATE=$(date +'%Y-%m-%d')
 
           if [ -f changelog-entry.txt ] && [ -s changelog-entry.txt ]; then
+            # Capture changelog content for release
+            CHANGELOG_CONTENT=$(cat changelog-entry.txt)
+            echo "changelog_content<<EOF" >> "$GITHUB_OUTPUT"
+            echo "$CHANGELOG_CONTENT" >> "$GITHUB_OUTPUT"
+            echo "EOF" >> "$GITHUB_OUTPUT"
+            
+            # Update CHANGELOG.md
             echo -e "## v$VERSION - $DATE\n$(cat changelog-entry.txt)\n\n$(cat CHANGELOG.md)" > CHANGELOG.md
             echo "✅ Changelog updated with version v$VERSION"
+            echo "has_changelog=true" >> "$GITHUB_OUTPUT"
           else
             echo "⚠️  No changelog-entry.txt found or empty. Adding generic entry."
             echo -e "## v$VERSION - $DATE\nVersion bump\n\n$(cat CHANGELOG.md)" > CHANGELOG.md
+            echo "changelog_content=Version bump - no specific changes documented" >> "$GITHUB_OUTPUT"
+            echo "has_changelog=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Clear changelog-entry.txt
@@ -69,8 +80,11 @@ jobs:
           # Amend the merge commit
           git commit --amend --no-edit -m "🔖 Merge PR & bump version to v$VERSION"
           
-          # Force push with admin token to bypass branch protection
-          git push --force-with-lease
+          # Configure git to use the PAT token for authentication
+          git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git
+          
+          # Force push to bypass branch protection
+          git push --force origin HEAD:main
 
       - name: Create Git Tag
         run: |
@@ -82,7 +96,7 @@ jobs:
       - name: Create GitHub Release
         uses: actions/github-script@v7
         with:
-          github-token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.ADMIN_TOKEN || secrets.GITHUB_TOKEN }}
           script: |
             const version = '${{ steps.bump.outputs.version }}';
             const tagName = `v${version}`;
