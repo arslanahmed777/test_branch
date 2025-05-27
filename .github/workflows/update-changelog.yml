@@ -19,7 +19,7 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.PAT_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           fetch-depth: 0
 
       - name: Setup Node.js
@@ -74,9 +74,9 @@ jobs:
           git add CHANGELOG.md changelog-entry.txt package.json package-lock.json
 
           VERSION=${{ steps.bump.outputs.version }}
-          git commit --amend --no-edit -m "🔖 Merge PR & bump version to v$VERSION"
+          git commit --amend --no-edit -m "🔖 Bump version to v$VERSION"
 
-          git remote set-url origin https://x-access-token:${{ secrets.PAT_TOKEN }}@github.com/${{ github.repository }}.git
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
           git push --force origin HEAD:main
 
       - name: Create Git Tag
@@ -91,7 +91,7 @@ jobs:
         env:
           CHANGELOG_CONTENT: ${{ steps.changelog.outputs.changelog_content }}
         with:
-          github-token: ${{ secrets.PAT_TOKEN || secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const version = '${{ steps.bump.outputs.version }}';
             const tagName = `v${version}`;
