@@ -1,0 +1,5 @@
+### Developer: Arslan Ahmed
+
+### ✨ Added
+- **Created `CONTRIBUTING.md` Guide**  
+  Added a `CONTRIBUTING.md` file to outline contribution guidelines, helping new contributors understand the workflow, coding standards, and pull request process.
