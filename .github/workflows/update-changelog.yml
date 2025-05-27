@@ -41,7 +41,7 @@ jobs:
         id: changelog
         run: |
           VERSION=${{ steps.bump.outputs.version }}
-          DATE=$(date +'%Y-%m-%d')
+          DATE=$(date +"%B %e, %Y at %-l:%M %p")
 
           if [ -f changelog-entry.txt ] && [ -s changelog-entry.txt ]; then
             # Capture changelog content for release
