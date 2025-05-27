@@ -1,3 +1,10 @@
+## v1.0.16 - May 28, 2025 at 4:08 AM
+### Developer: Arslan Ahmed
+
+### ✨ Added
+- **Created `CONTRIBUTING.md` Guide**  
+  Added a `CONTRIBUTING.md` file to outline contribution guidelines, helping new contributors understand the workflow, coding standards, and pull request process.
+
 ## v1.0.15 - May 28, 2025 at 3:51 AM
 ### Developer: Arslan Ahmed
 
