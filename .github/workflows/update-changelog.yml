@@ -66,4 +66,4 @@ jobs:
 
           VERSION=${{ steps.bump.outputs.version }}
           git commit --amend -m "🔖 Merge PR & bump version to v$VERSION"
-          git push --force-with-lease https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:main
+          git push  https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }} HEAD:main
