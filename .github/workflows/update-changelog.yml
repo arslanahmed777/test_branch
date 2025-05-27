@@ -100,7 +100,7 @@ jobs:
           script: |
             const version = '${{ steps.bump.outputs.version }}';
             const tagName = `v${version}`;
-            const changelogContent = `${{ steps.changelog.outputs.changelog_content }}`;
+            const changelogContent = process.env.CHANGELOG_CONTENT;
             const hasChangelog = '${{ steps.changelog.outputs.has_changelog }}' === 'true';
             
             // Prepare release body
