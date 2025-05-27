@@ -36,29 +36,12 @@ jobs:
           npm version patch --no-git-tag-version
           echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
 
-      - name: Get formatted date and time
-        id: datetime
-        run: |
-          DATE=$(node -e "
-            const date = new Date();
-            const options = {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric',
-              hour: 'numeric',
-              minute: '2-digit',
-              hour12: true,
-              timeZoneName: 'short'
-            };
-            console.log('date_time=' + new Intl.DateTimeFormat('en-US', options).format(date));
-          ")
-          echo "$DATE" >> "$GITHUB_OUTPUT"
 
       - name: Prepend changelog-entry.txt to CHANGELOG.md and capture content
         id: changelog
         run: |
           VERSION=${{ steps.bump.outputs.version }}
-          DATE="${{ steps.datetime.outputs.date_time }}"
+          DATE=$(TZ=Asia/Karachi date +"%B %e, %Y at %-l:%M %p")
 
           if [ -f changelog-entry.txt ] && [ -s changelog-entry.txt ]; then
             CHANGELOG_CONTENT=$(cat changelog-entry.txt)
