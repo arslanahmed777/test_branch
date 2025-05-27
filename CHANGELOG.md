@@ -1,3 +1,16 @@
+## v1.0.15 - May 28, 2025 at 3:51 AM
+### Developer: Arslan Ahmed
+
+### ✅ Success
+- Build successful after moving components to a different folder.
+
+### ✨ Added
+- Integrated `eslint-plugin-sonarjs` to detect code smells and improve code quality.
+- Added `eslint-plugin-simple-import-sort` and configured it in `eslint.config.js` to enforce clean and consistent import ordering.
+
+### 🔄 Changed
+- Sorted all imports using `eslint-plugin-simple-import-sort` across the codebase for better organization and maintainability.
+
 ## v1.0.14 - May 28, 2025 at 3:43 AM
 ### Developer: Arslan Ahmed
 
