@@ -36,24 +36,40 @@ jobs:
           npm version patch --no-git-tag-version
           echo "version=$(node -p "require('./package.json').version")" >> "$GITHUB_OUTPUT"
 
+      - name: Get formatted date and time
+        id: datetime
+        run: |
+          DATE=$(node -e "
+            const date = new Date();
+            const options = {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: 'numeric',
+              minute: '2-digit',
+              hour12: true,
+              timeZoneName: 'short'
+            };
+            console.log('date_time=' + new Intl.DateTimeFormat('en-US', options).format(date));
+          ")
+          echo "$DATE" >> "$GITHUB_OUTPUT"
+
       - name: Prepend changelog-entry.txt to CHANGELOG.md and capture content
         id: changelog
         run: |
           VERSION=${{ steps.bump.outputs.version }}
-          DATE=$(TZ=Asia/Karachi date +"%B %e, %Y at %-l:%M %p")
+          DATE="${{ steps.datetime.outputs.date_time }}"
 
           if [ -f changelog-entry.txt ] && [ -s changelog-entry.txt ]; then
-            # Save multiline-safe changelog content
+            CHANGELOG_CONTENT=$(cat changelog-entry.txt)
             {
               echo "changelog_content<<EOF"
-              cat changelog-entry.txt
+              echo "$CHANGELOG_CONTENT"
               echo "EOF"
             } >> "$GITHUB_OUTPUT"
-
-            # Prepend entry to CHANGELOG.md
-            echo -e "## v$VERSION - $DATE\n$(cat changelog-entry.txt)\n\n$(cat CHANGELOG.md)" > CHANGELOG.md
-            echo "✅ Changelog updated with version v$VERSION"
+            echo -e "## v$VERSION - $DATE\n$CHANGELOG_CONTENT\n\n$(cat CHANGELOG.md)" > CHANGELOG.md
             echo "has_changelog=true" >> "$GITHUB_OUTPUT"
+            echo "✅ Changelog updated with version v$VERSION"
           else
             echo "⚠️  No changelog-entry.txt found or empty. Adding generic entry."
             echo -e "## v$VERSION - $DATE\nVersion bump\n\n$(cat CHANGELOG.md)" > CHANGELOG.md
@@ -70,12 +86,9 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-
           git add CHANGELOG.md changelog-entry.txt package.json package-lock.json
-
           VERSION=${{ steps.bump.outputs.version }}
-          git commit --amend --no-edit -m "🔖 Bump version to v$VERSION"
-
+          git commit --amend --no-edit -m "🔖 Merge PR & bump version to v$VERSION"
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
           git push --force origin HEAD:main
 
@@ -90,20 +103,18 @@ jobs:
         uses: actions/github-script@v7
         env:
           CHANGELOG_CONTENT: ${{ steps.changelog.outputs.changelog_content }}
+          HAS_CHANGELOG: ${{ steps.changelog.outputs.has_changelog }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const version = '${{ steps.bump.outputs.version }}';
             const tagName = `v${version}`;
+            const hasChangelog = process.env.HAS_CHANGELOG === 'true';
             const changelogContent = process.env.CHANGELOG_CONTENT;
-            const hasChangelog = '${{ steps.changelog.outputs.has_changelog }}' === 'true';
 
-            let releaseBody;
-            if (hasChangelog && changelogContent && changelogContent !== 'Version bump - no specific changes documented') {
-              releaseBody = changelogContent;
-            } else {
-              releaseBody = `Version ${version} - Auto-generated release\n\nNo specific changes documented.`;
-            }
+            const releaseBody = hasChangelog && changelogContent && changelogContent !== 'Version bump - no specific changes documented'
+              ? changelogContent
+              : `Version ${version} - Auto-generated release\n\nNo specific changes documented.`;
 
             try {
               await github.rest.repos.createRelease({
