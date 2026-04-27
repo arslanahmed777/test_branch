@@ -1,0 +1,77 @@
+name: Prepare Changelog in PR
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - main
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  prepare-changelog:
+    if: github.actor != 'github-actions[bot]' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Bump version and prepend changelog
+        id: prepare
+        run: |
+          if [ ! -f changelog-entry.txt ] || [ -z "$(grep -v '^[[:space:]]*$' changelog-entry.txt)" ]; then
+            echo "should_commit=false" >> "$GITHUB_OUTPUT"
+            echo "changelog-entry.txt is missing or empty. Skipping prepare step."
+            exit 0
+          fi
+
+          git fetch origin main --depth=1
+          if ! git diff --quiet origin/main...HEAD -- package.json; then
+            echo "should_commit=false" >> "$GITHUB_OUTPUT"
+            echo "package.json already differs from main. Skipping auto-bump to avoid duplicate version updates."
+            exit 0
+          fi
+
+          npm version patch --no-git-tag-version
+          VERSION=$(node -p "require('./package.json').version")
+          DATE=$(TZ=Asia/Karachi date +"%B %e, %Y at %-l:%M %p")
+          CHANGELOG_CONTENT=$(cat changelog-entry.txt)
+
+          {
+            printf "# 🚀 v%s\n" "$VERSION"
+            printf "### 📅 %s\n\n" "$DATE"
+            printf "%s\n\n" "$CHANGELOG_CONTENT"
+            cat CHANGELOG.md
+          } > CHANGELOG.md.new
+
+          mv CHANGELOG.md.new CHANGELOG.md
+          : > changelog-entry.txt
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "should_commit=true" >> "$GITHUB_OUTPUT"
+
+      - name: Commit and push prepare changes
+        if: steps.prepare.outputs.should_commit == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md changelog-entry.txt package.json package-lock.json
+
+          if git diff --cached --quiet; then
+            echo "No changelog/version changes to commit."
+            exit 0
+          fi
+
+          git commit -m "chore: prepare changelog and bump version v${{ steps.prepare.outputs.version }}"
+          git push
